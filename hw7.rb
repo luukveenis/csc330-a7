@@ -28,7 +28,7 @@ class GeometryExpression
   Epsilon = 0.00001
 end
 
-class GeometryValue
+class GeometryValue < GeometryExpression
   # do *not* change methods in this class definition
   # you can add methods if you wish
 
