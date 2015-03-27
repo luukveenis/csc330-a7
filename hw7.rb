@@ -31,6 +31,12 @@ class GeometryValue
   # do *not* change methods in this class definition
   # you can add methods if you wish
 
+  # LineSegment is the only one that needs to override this
+  # Makes more sense to put this here and handle that one case explicitly
+  def preprocess_prog
+    self
+  end
+
   # we put this in this class so all subclasses can inherit it:
   # the intersection of self with a NoPoints is a NoPoints object
   def intersectNoPoints np
@@ -74,9 +80,6 @@ class NoPoints < GeometryValue
   # Note: no initialize method only because there is nothing it needs to do
   def eval_prog env
     self # all values evaluate to self
-  end
-  def preprocess_prog
-    self # no pre-processing to do here
   end
   def shift(dx,dy)
     self # shifting no-points is no-points
@@ -147,6 +150,18 @@ class LineSegment < GeometryValue
     @x2 = x2
     @y2 = y2
   end
+
+  def preprocess_prog
+    if real_close(@x1,@x2) && real_close(@y1,@y2)
+      Point.new @x1, @x2
+    elsif @x2 < @x1
+      LineSegment.new @x2, @y2, @x1, @y1
+    elsif real_close(@x1, @x2) && @y1 > @y2
+      LineSegment.new(@x2,@y2,@x1,@y1)
+    else
+      self
+    end
+  end
 end
 
 # Note: there is no need for getter methods for the non-value classes
@@ -158,6 +173,10 @@ class Intersect < GeometryExpression
     @e1 = e1
     @e2 = e2
   end
+
+  def preprocess_prog
+    Intersect.new @e1.preprocess_prog, @e2.preprocess_prog
+  end
 end
 
 class Let < GeometryExpression
@@ -168,6 +187,10 @@ class Let < GeometryExpression
     @s = s
     @e1 = e1
     @e2 = e2
+  end
+
+  def preprocess_prog
+    Let.new @s, @e1.preprocess_prog, @e2.preprocess_prog
   end
 end
 
@@ -182,6 +205,10 @@ class Var < GeometryExpression
     raise "undefined variable" if pr.nil?
     pr[1]
   end
+
+  def preprocess_prog
+    self
+  end
 end
 
 class Shift < GeometryExpression
@@ -191,5 +218,9 @@ class Shift < GeometryExpression
     @dx = dx
     @dy = dy
     @e = e
+  end
+
+  def preprocess_prog
+    Shift.new @dx, @dy, @e.preprocess_prog
   end
 end
