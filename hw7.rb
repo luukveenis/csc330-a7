@@ -132,7 +132,7 @@ class Point < GeometryValue
   end
 
   def intersectLine line
-    real_close(@y, line.m*@x+y.b) ? self : NoPoints.new
+    real_close(@y, line.m * @x + line.b) ? self : NoPoints.new
   end
 
   def intersectVerticalLine vline
