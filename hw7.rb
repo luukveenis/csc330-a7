@@ -267,7 +267,7 @@ class LineSegment < GeometryValue
   end
 
   def intersect other
-    other.intersectWithSegmentAsLineResult self
+    other.intersectLineSegment self
   end
 
   def intersectPoint point
