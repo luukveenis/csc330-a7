@@ -138,6 +138,21 @@ class Point < GeometryValue
   def intersectVerticalLine vline
     real_close(@x, vline.x) ? self : NoPoints.new
   end
+
+  def intersectWithSegmentAsLineResult seg
+    if in_between(@x, seg.x1, seg.x2) && in_between(@y, seg.y1, seg.y2)
+      Point.new @x, @y
+    else
+      NoPoints.new
+    end
+  end
+
+  private
+
+  def in_between v, end1, end2
+    (end1 - Epsilon <= v && v <= end2 + Epsilon) ||
+      (end2 - Epsilon <= v && v <= end1 + Epsilon)
+  end
 end
 
 class Line < GeometryValue
@@ -176,7 +191,11 @@ class Line < GeometryValue
   end
 
   def intersectVerticalLine vline
-    real_close(@x, vline.x) ? self : NoPoints.new
+    Point.new vline.x, @m * vline.x + @b
+  end
+
+  def intersectWithSegmentAsLineResult seg
+    seg
   end
 end
 
@@ -207,6 +226,10 @@ class VerticalLine < GeometryValue
   def intersectVerticalLine v
     real_close(@x, v.x) ? self : NoPoints.new
   end
+
+  def intersectWithSegmentAsLineResult seg
+    seg
+  end
 end
 
 class LineSegment < GeometryValue
@@ -224,11 +247,15 @@ class LineSegment < GeometryValue
   end
 
   def preprocess_prog
-    if real_close(@x1,@x2) && real_close(@y1,@y2)
-      Point.new @x1, @x2
-    elsif @x2 < @x1
-      LineSegment.new @x2, @y2, @x1, @y1
-    elsif real_close(@x1, @x2) && @y1 > @y2
+    if real_close(@x1,@x2)
+      if real_close(@y1,@y2)
+        Point.new @x1, @y1
+      elsif @y1 > @y2
+        LineSegment.new(@x2,@y2,@x1,@y1)
+      else
+        self
+      end
+    elsif @x1 > @x2
       LineSegment.new(@x2,@y2,@x1,@y1)
     else
       self
@@ -241,6 +268,46 @@ class LineSegment < GeometryValue
 
   def intersect other
     other.intersectWithSegmentAsLineResult self
+  end
+
+  def intersectPoint point
+    point.intersectLineSegment self
+  end
+
+  def intersectLine line
+    line.intersectLineSegment self
+  end
+
+  def intersectVerticalLine vline
+    vline.intersectLineSegment self
+  end
+
+  def intersectWithSegmentAsLineResult seg
+    if real_close @x1, @x2
+      seg1, seg2 = @y1 < seg.y1 ? [self, seg] : [seg, self]
+
+      if real_close(seg1.y2, seg2.y1)
+        Point.new seg1.x2, seg1.y2
+      elsif seg1.y2 < seg2.y1
+        NoPoints.new
+      elsif seg1.y2 > seg2.y2
+        seg2
+      else
+        LineSegment.new seg2.x1, seg2.y1, seg1.x2, seg1.y2
+      end
+    else
+      seg1, seg2 = @x1 < seg.x1 ? [self, seg] : [seg, self]
+
+      if real_close(seg1.x2, seg2.x1)
+        Point.new seg1.x2, seg1.y2
+      elsif seg1.x2 < seg2.x1
+        NoPoints.new
+      elsif seg1.x2 > seg2.x2
+        seg2
+      else
+        LineSegment.new seg2.x1, seg2.y1, seg1.x2, seg1.y2
+      end
+    end
   end
 end
 
@@ -278,7 +345,7 @@ class Let < GeometryExpression
   end
 
   def eval_prog env
-    @e2.eval_prog [@s, @e1.eval_prog(env)] + env
+    @e2.eval_prog [[@s, @e1.eval_prog(env)]] + env
   end
 end
 
