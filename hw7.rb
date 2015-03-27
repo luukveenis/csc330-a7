@@ -1,3 +1,4 @@
+require "pry"
 # a little language for 2D geometry objects
 
 # each subclass of GeometryExpression, including subclasses of GeometryValue,
