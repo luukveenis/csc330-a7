@@ -32,3 +32,6 @@ build/
 
 # unless supporting rvm < 1.11.0 or doing something fancy, ignore this:
 .rvmrc
+
+# Use ripper tags since code is structured so poorly
+tags
