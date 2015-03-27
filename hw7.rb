@@ -37,6 +37,10 @@ class GeometryValue
     self
   end
 
+  def eval_prog env
+    self # all values evaluate to self
+  end
+
   # we put this in this class so all subclasses can inherit it:
   # the intersection of self with a NoPoints is a NoPoints object
   def intersectNoPoints np
@@ -78,9 +82,6 @@ class NoPoints < GeometryValue
   # of geometry values needs)
 
   # Note: no initialize method only because there is nothing it needs to do
-  def eval_prog env
-    self # all values evaluate to self
-  end
   def shift(dx,dy)
     self # shifting no-points is no-points
   end
@@ -192,6 +193,10 @@ class Let < GeometryExpression
   def preprocess_prog
     Let.new @s, @e1.preprocess_prog, @e2.preprocess_prog
   end
+
+  def eval_prog env
+    @e2.eval_prog [@s, @e1.eval_prog(env)] + env
+  end
 end
 
 class Var < GeometryExpression
@@ -200,6 +205,7 @@ class Var < GeometryExpression
   def initialize s
     @s = s
   end
+
   def eval_prog env # remember: do not change this method
     pr = env.assoc @s
     raise "undefined variable" if pr.nil?
@@ -222,5 +228,9 @@ class Shift < GeometryExpression
 
   def preprocess_prog
     Shift.new @dx, @dy, @e.preprocess_prog
+  end
+
+  def eval_prog env
+    @e.eval_prog(env).shift(@dx,@dy)
   end
 end
