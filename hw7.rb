@@ -82,7 +82,7 @@ class NoPoints < GeometryValue
   # of geometry values needs)
 
   # Note: no initialize method only because there is nothing it needs to do
-  def shift(dx,dy)
+  def shift dx, dy
     self # shifting no-points is no-points
   end
   def intersect other
@@ -117,6 +117,10 @@ class Point < GeometryValue
     @x = x
     @y = y
   end
+
+  def shift dx, dy
+    Point.new @x+dx, @y+dy
+  end
 end
 
 class Line < GeometryValue
@@ -127,6 +131,10 @@ class Line < GeometryValue
     @m = m
     @b = b
   end
+
+  def shift dx, dy
+    Line.new @m, (@b + dy - (@m*dx))
+  end
 end
 
 class VerticalLine < GeometryValue
@@ -135,6 +143,10 @@ class VerticalLine < GeometryValue
   attr_reader :x
   def initialize x
     @x = x
+  end
+
+  def shift dx, dy
+    Line.new @x + dx
   end
 end
 
@@ -162,6 +174,10 @@ class LineSegment < GeometryValue
     else
       self
     end
+  end
+
+  def shift dx, dy
+    LineSegment.new (@x1 + dx), (@y1 + dy), (@x2 + dx), (@y2 + dy)
   end
 end
 
