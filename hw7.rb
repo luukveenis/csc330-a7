@@ -188,7 +188,7 @@ class VerticalLine < GeometryValue
   end
 
   def shift dx, dy
-    Line.new @x + dx
+    VerticalLine.new @x + dx
   end
 
   def intersect other
